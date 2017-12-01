@@ -1,0 +1,40 @@
+Line 1  -   76 CYCLES
+=====================
+Calculate Player1 - 18 18   X
+Calculate Missile1- 14 32   X
+Draw Playfield L  - 24 56   X
+Draw Player0       - 9 65   X
+
+
+
+
+Line 2  -   76 CYCLES
+=====================
+Calculate Player0 - 18 18   X
+Calculate PF Clr  - 8  26   X
+Draw Playfield R  - 24 50
+Draw Player1      - 14 64   X
+Draw Missile1     - 3  67   X
+
+
+
+
+Preload
+==================
+Set Playfield Colour
+Load Player0 Graphics
+Load Player0 Colour
+
+
+Line 1
+==================
+Draw Player0 Graphics
+
+
+
+DEC PF_Index    5  5
+LDY PF_Index    3  8
+
+[Playfield Colour]
+
+LDY K_Index     3 11
