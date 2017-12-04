@@ -1,0 +1,185 @@
+	ldy #PF_HEIGHT     ; 2 13    - Two line resolution for playfield.
+    sty PF_Index       ; 3 16    - It used to be single-line resolution,
+    ldy #2LK_HGHT      ; 2 18    - but a multi-coloured, asymmetrical 
+    sty K_Index        ; 3 21    - playfield takea up a LOT of cycles.
+
+    ; We don't need to calculate Missile0 to appear on the very first
+    ; scanline of the frame. This helps us speed up our preloading of
+    ; the graphics for the Playfield and Player0.
+
+;---------------------------------
+; Preload Playfield Scanline Colour
+;---------------------------------
+	
+	lda (PFColourPtr),y   ; 5 26 - Playfield Colour Pointer 
+	sta COLUPF     	      ; 3 29 
+	
+;---------------------------------
+; Preload the Player0 Graphics
+;---------------------------------
+    
+    lda #P1_HEIGHT-1	; 2 31 (2)
+	dcp Player0Draw		; 5 36 (7)
+	bcs DoDrawGRP0		; 2 38 (9) - (3 39)
+	lda #0			    ; 2 40 (11)
+	.byte $2C		    ; 4 44 (15)
+
+DoDrawGRP0:			    ;  (39)(10)
+	lda (Player0Ptr),y	; 5 44 (15)
+	sta Player0GFX      ; 3 47 (18)
+                        
+  	lda (Player0Clr),y     ; 5 52    -   Precalculate Player0 Colour to land on
+                           ;         -   the first scanline
+    
+;---------------------------------
+; Prime scanline index
+;---------------------------------
+
+    ldy PF_Index
+
+    sta WSYNC
+;-------------------------------------------------------
+	
+PFLoop:
+
+;=================================
+; Start Line 1 of the Kernel
+;=================================
+
+;---------------------------------
+; Here we:
+; - Set the graphics of Player0
+;---------------------------------
+
+	sta COLUP0             ; 3  3
+	lda Player0GFX         ; 3  6
+	sta GRP0               ; 3  9
+
+;----------------------------------
+; Load the graphics for LeftPF0
+;----------------------------------
+
+    lda (LeftPF0Ptr),y      ; 5 14 (5)
+    sta PF0                 ; 3 17 (8)  -   (@55-22) PHEW. MADE IT.
+    lda (LeftPF1Ptr),y      ; 5 22 (13)
+    sta PF1                 ; 3 25 (16) -   (@66-28) PHEW. With 3 cycles to spare
+    lda (LeftPF2Ptr),y      ; 5 30 (21) 
+    sta PF2                 ; 3 33 (24) -   (@0-38) 5 cycles to spare. I was sweating
+                            ;                       bullets there...
+
+;---------------------------------
+; Load Kernel Index
+;---------------------------------
+
+    ldy K_Index         ; 3 36
+                            
+;---------------------------------
+; Calculate whether or not Missile1 is being drawn
+;---------------------------------
+    
+    ldx #1              ; 2 38 (2)
+    lda #BULL_HGHT-1    ; 2 40 (4)
+    dcp Missile1Draw    ; 5 45 (9)
+    bcs DoEnam1         ; 2 47 (11) (3 48)(12)
+    .byte $24           ; 3 50 (14)
+    
+DoEnam1:                ;   48 (12)
+    inx                 ; 2 50 (14)
+    
+;---------------------------------
+; Calculate the Player1 Graphics
+;---------------------------------
+    
+    lda #P1_HEIGHT-1	; 2 52 (2)
+	dcp Player1Draw		; 5 56 (7)
+	bcs DoDrawGRP1		; 2 58 (9) - (3 59)
+	lda #0			    ; 2 60 (11)
+	.byte $2C		    ; 4 64 (15)
+
+DoDrawGRP1:			    ;  (59)(10)
+	lda (Player1Ptr),y	; 5 64 (15)
+	sta Player1GFX      ; 3 67 (18)
+    lda (Player1Clr),y  ; 5 72
+
+    sta WSYNC           ; 3 75
+;--------------------------------------------------------------
+
+
+
+;=================================
+; Line 2 of the Kernel
+;=================================
+
+;---------------------------------
+; Draw:
+; - Player1
+; - Missile1
+;---------------------------------
+
+	sta COLUP1             ; 3  3
+	lda Player1GFX         ; 3  6
+	sta GRP1               ; 3  9
+	stx ENAM1              ; 3 12
+
+;---------------------------------
+; We've finished drawing all the Players and Missiles,
+; so we can decrement the Kernel Index.
+;---------------------------------
+
+	dec K_Index            ; 5 17
+
+;---------------------------------
+; Calculate Player0 Graphics
+;---------------------------------
+    
+    lda #P1_HEIGHT-1    ; 2 19 (2)                                  Load Sprite Height 
+    dcp Player0Draw     ; 5 24 (7)                                  Decrement Offset + Compare with Height
+    bcs DoDrawP0        ; 2 26 (9) - (3 27) (10)                    Branch if Sprite Height is Equal to or greater than Offset
+    lda #0              ; 2 28 (11)
+    .byte $2C           ; 4 32 (15)
+    
+DoDrawP0:               ;  (27)(10)
+    lda (Player0Ptr),y  ; 5 32 (15)
+    sta Player0GFX      ; 3 35 (18)	
+
+;---------------------------------
+; Now we have to load the Playfield Index
+; The playfield is at a single line resolution
+; So for every two lines we go through the kernel
+;---------------------------------
+
+    ldy PF_Index        ; 3 38
+	
+;---------------------------------
+; Draw the right side of the playfield
+;---------------------------------
+    
+    lda (RightPF0Ptr),y      ; 5 43
+    sta PF0                  ; 3 46 (8)  -   (@28-49) 
+    lda (RightPF1Ptr),y      ; 5 51
+    sta PF1                  ; 3 54 (16) -   (@39-54)   -   PHEW. JUST MADE IT....
+    lda (RightPF2Ptr),y      ; 5 59  
+    sta PF2                  ; 3 62 (24) -   (@50-66) 
+
+;---------------------------------
+; Now we decrement the Playfield Index
+;---------------------------------
+
+
+    
+
+	lda (PFColourPtr),y   ; 5 18 - Playfield Colour Pointer 
+	sta COLUPF     	      ; 3 21 (8)
+    
+
+    
+;---------------------------------
+; We've now finished DRAWING the 2 line
+; kernel, so we can decrement the scanline
+; index register.
+;---------------------------------
+    
+    bne PFLoop         ; 2 21 (3 22) - Branch if more Playfield to show.
+
+
+	rts			; the RTS for the whole Kernel
