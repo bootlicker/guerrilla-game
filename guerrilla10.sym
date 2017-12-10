@@ -1,0 +1,167 @@
+--- Symbol List (sorted by symbol)
+0.CntHorCntr             f109              (R )
+0.IncFrameNo             f0ef              (R )
+0.IncFrameYes            f0f2              (R )
+0.KernelLoop             f1a2              (R )
+0.p0loop                 f0a2                  
+0.ResFrmCntr             f0f5              (R )
+0.ResHorCntr             f107              (R )
+0.Wait                   f1ca              (R )
+1.CLEAR_STACK            f019              (R )
+===============          f02d                  
+AnimateDown0             0098              (R )
+AnimateDownNo            f122              (R )
+AnimateDownYes           f120              (R )
+AnimateHor0              0096              (R )
+AnimateHorizontalNo      f0fd              (R )
+AnimateHorizontalYes     f0fb              (R )
+AnimateUp0               0097              (R )
+AnimateUpNo              f112              (R )
+AnimateUpYes             f110              (R )
+Animation0               0087              (R )
+Animation1               0088                  
+AnimationDelay           f0e3              (R )
+AnimationDelayDown       f0d3              (R )
+AnimationDelayUp         f0ca              (R )
+AnimFrameCounter         0095              (R )
+AUDC0                    0015                  
+AUDC1                    0016                  
+AUDF0                    0017                  
+AUDF1                    0018                  
+AUDV0                    0019                  
+AUDV1                    001a                  
+CheBackLeftStand         f2ca              (R )
+CheBackLeftStandClr      f392              (R )
+CheBackLeftStep          f315              (R )
+CheBackLeftStepClr       f3dd              (R )
+CheBackRightStand        f2fc              (R )
+CheBackRightStandClr     f3c4              (R )
+CheBackRightStep         f2e3              (R )
+CheBackRightStepClr      f3ab              (R )
+CheckDown                f083              (R )
+CheckLeft                f071              (R )
+CheckUp                  f091              (R )
+CheFrontLeftStand        f266              (R )
+CheFrontLeftStandClr     f32e              (R )
+CheFrontLeftStep         f2b1              (R )
+CheFrontLeftStepClr      f379              (R )
+CheFrontRightStand       f298              (R )
+CheFrontRightStandClr    f360              (R )
+CheFrontRightStep        f27f              (R )
+CheFrontRightStepClr     f347              (R )
+CheHorizontal0           f1d0              (R )
+CheHorizontal1           f1e9              (R )
+CheHorizontal2           f202              (R )
+CheHorizontalClr0        f21b              (R )
+CheHorizontalClr1        f234              (R )
+CheHorizontalClr2        f24d              (R )
+ColourPtrHi              f170              (R )
+ColourPtrLow             f165              (R )
+COLUBK                   0009              (R )
+COLUP0                   0006              (R )
+COLUP1                   0007                  
+COLUPF                   0008                  
+CTRLPF                   000a                  
+CXBLPF                   0006                  
+CXCLR                    002c                  
+CXM0FB                   0004                  
+CXM0P                    0000                  
+CXM1FB                   0005                  
+CXM1P                    0001                  
+CXP0FB                   0002                  
+CXP1FB                   0003                  
+CXPPMM                   0007                  
+DivideLoop               f003              (R )
+DoDrawGrp0               f1b3              (R )
+DoDrawGrp0pre            f19b              (R )
+ENABL                    001f                  
+ENAM0                    001d                  
+ENAM1                    001e                  
+Frame                    0086                  
+GRP0                     001b              (R )
+GRP1                     001c              (R )
+HMBL                     0024                  
+HMCLR                    002b                  
+HMM0                     0022                  
+HMM1                     0023                  
+HMOVE                    002a              (R )
+HMP0                     0020              (R )
+HMP1                     0021                  
+InitSystem               f013              (R )
+INPT0                    0008                  
+INPT1                    0009                  
+INPT2                    000a                  
+INPT3                    000b                  
+INPT4                    000c                  
+INPT5                    000d                  
+INTIM                    0284              (R )
+Kernel                   f17b              (R )
+Main                     f01e              (R )
+NUSIZ0                   0004                  
+NUSIZ1                   0005                  
+ObjectX                  0080              (R )
+ObjectY                  0081              (R )
+OnePlayer                f09f              (R )
+OverScan                 f1bd              (R )
+P0_HEIGHT                0019              (R )
+PF0                      000d              (R )
+PF1                      000e              (R )
+PF2                      000f              (R )
+PF_HEIGHT                00c0              (R )
+PFColourPtr              0090                  
+PFIndex                  008f                  
+Player0Clr               0089              (R )
+Player0Offset            0092              (R )
+Player0Ptr               0082              (R )
+Player1Clr               008b                  
+Player1Ptr               0084                  
+PositionObjects          f0a0              (R )
+PosObject                f000              (R )
+ProcessJoystick          f054              (R )
+REFP0                    000b              (R )
+REFP1                    000c                  
+RESBL                    0014                  
+RESM0                    0012                  
+RESM1                    0013                  
+RESMP0                   0028                  
+RESMP1                   0029                  
+RESP0                    0010              (R )
+RESP1                    0011                  
+RSYNC                    0003                  
+SavedX                   0093              (R )
+SavedY                   0094              (R )
+SaveFrame                f12d              (R )
+SaveX                    f06b              (R )
+SaveX2                   f07d              (R )
+SaveY                    f08f              (R )
+SaveY2                   f09d              (R )
+ShapePtrHi               f15a              (R )
+ShapePtrLow              f14f              (R )
+Sleep12                  f04c                  
+StopAnimation            f0dc              (R )
+SWACNT                   0281                  
+SWBCNT                   0283                  
+SWCHA                    0280              (R )
+SWCHB                    0282                  
+T1024T                   0297                  
+Temp                     008d              (R )
+Temp2                    008e              (R )
+TIA_BASE_ADDRESS         0000              (R )
+TIA_BASE_READ_ADDRESS    0000              (R )
+TIA_BASE_WRITE_ADDRESS   0000              (R )
+TIM1T                    0294                  
+TIM64T                   0296              (R )
+TIM8T                    0295                  
+TIMINT                   0285                  
+VBLANK                   0001              (R )
+VDELBL                   0027                  
+VDELP0                   0025                  
+VDELP1                   0026                  
+VERSION_MACRO            0069                  
+VERSION_VCS              0069                  
+VerticalBlank            f04d              (R )
+VerticalSync             f02d              (R )
+VSYNC                    0000              (R )
+WSYNC                    0002              (R )
+YMovement                f0c0              (R )
+--- End of Symbol List.
