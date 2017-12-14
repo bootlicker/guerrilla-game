@@ -1,0 +1,56 @@
+
+- define screen
+- define sections within screen
+- define whether tree, peasant, or soldier in section
+- limit to four sections
+- which section are we in? (0-3)
+- if (0-3) get new address and new offset
+- store new offset, and new address in pointer
+
+
+
+how can we check in the kernel which section of which level we are in?
+
+    we can limit the number of sections to four.
+    
+    we can hard code the sections to scanlines.
+    
+    or we can use variables. it would be easier to hardcode section heights.
+    
+    we currently have 15+- cycles to spare. a CMP followed by a successful branch takes 3 + 3 cycles.
+    
+    we could only be able to do at most 2 sections this way.
+
+we could set an offset before we get into the kernel, and change the offset as we move down the screen.
+
+we may need to jump in and out of the kernel. would this necessitate a 2-line-kernel?
+
+====================
+
+we could use SpiceWare's method, but modify it a bit:
+
+- four separate kernels
+- four separate offsets and pointers for each of the trees, peasants, or soldiers
+- do not use a mask for Che.
+- switch between two different scanline counters.
+    * One for the separate bands up and down the screen.
+    * One for Che for the whole screen.
+    
+====================
+
+we could use my method for testing which section of the screen, but use a 2LK.
+
+this would necessitate using DELPx. I think I can master this from looking at Collect
+
+
+192-------------
+
+152-------------
+
+112-------------
+
+72-------------
+
+32-------------
+
+0---------------
