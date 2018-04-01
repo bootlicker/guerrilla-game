@@ -195,7 +195,7 @@ SaveFrame:
     sta Player0Msk+1
     
 ;=================================
-; SECTIONS 1-4
+; SECTIONS 1-3
 ;=================================
 
     ldx #0
@@ -250,7 +250,7 @@ SaveFrame:
         
     dey ; 2
     inx        
-    cpx #4
+    cpx #3
     bcc .SectionsLoop
 
 ;=================================
@@ -297,7 +297,7 @@ NextMask2
 NextMask
     iny
     iny
-    cpy #5*2
+    cpy #4*2
     bcc MaskLoop
 
     ENDM

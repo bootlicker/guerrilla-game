@@ -13,20 +13,17 @@ LevelProcessing:
     ; But for now, we will just be statically
     ; setting the Heights variable for each band
     ; up and down the screen.
-
-    lda #32
-    sta Heights+4
     
-    lda #40
+    lda #48
     sta Heights+3
     
-    lda #40
+    lda #48
     sta Heights+2
     
-    lda #40
+    lda #48
     sta Heights+1
     
-    lda #40
+    lda #48
     sta Heights
     
     ; Now we need to index the Environment
@@ -48,49 +45,42 @@ LevelProcessing:
     sta EnvClrPtr+1
     
 ;=================================
-; BANDS 1-4
+; BANDS 1-3
 ;=================================
 
     lda EnvGfxPtr
     sta EnvGfxPtr+2
     sta EnvGfxPtr+4
     sta EnvGfxPtr+6
-    sta EnvGfxPtr+8
     
     lda EnvGfxPtr+1
     sta EnvGfxPtr+3
     sta EnvGfxPtr+5
     sta EnvGfxPtr+7
-    sta EnvGfxPtr+9
     
     lda EnvClrPtr
     sta EnvClrPtr+2
     sta EnvClrPtr+4
     sta EnvClrPtr+6
-    sta EnvClrPtr+8
     
     lda EnvClrPtr+1
     sta EnvClrPtr+3
     sta EnvClrPtr+5
     sta EnvClrPtr+7
-    sta EnvClrPtr+9
     
     ; Now we set the X positions of the
     ; environment graphics.
-    
-    lda #20
-    sta ObjectX+5
 
-    lda #40
+    lda #20
     sta ObjectX+4
     
-    lda #60
+    lda #40
     sta ObjectX+3
     
-    lda #80
+    lda #60
     sta ObjectX+2
     
-    lda #100 
+    lda #80 
     sta ObjectX+1
     
     ENDM

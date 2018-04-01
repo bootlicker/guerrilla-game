@@ -1,86 +1,91 @@
 
     MAC CHE_VARIABLES
 
-	; Object X positions in $80-84
-ObjectX:	ds 6	; player0, 5 x player1 objects
+	; Object X positions
+ObjectX:	ds 5	; player0, 4 x player1 objects
 
-	; Object Y positions in $85-89
-ObjectY:	ds 6	; player0, 5 x player1 objects
+	; Object Y positions
+ObjectY:	ds 5	; player0, 4 x player1 objects
 
-;===========Graphic Pointers in $90-95===========
+;===========Graphic Pointers===========
 
 ; Che's graphics pointer	
-Player0Ptr:	ds 10
+Player0Ptr:	ds 8
 
 ; Environment graphics pointers
-EnvGfxPtr: ds 10 ; $95
+EnvGfxPtr: ds 8
 
 ;==============Color Pointers====================
-;========== in $A1 to $B2 =======================
 
 ; Che's colour pointer     
-Player0Clr: ds 10    ; player0, stored in $A1-A2
+Player0Clr: ds 8    ; player0
 
 ; Environment colour pointers
-EnvClrPtr: ds 10   ; $B2
+EnvClrPtr: ds 8   ;
 
 ;==============Mask Pointers=====================
 
 ; Che's mask pointer
-Player0Msk: ds 10
+Player0Msk: ds 8
 
 ;================================================
 
 
-; Environment NUSIZX variables in $96-9A
-EnvCopies:  ds 5
+; Environment NUSIZX variables
+EnvCopies:  ds 4
 
 
 	; Indexes for player animation sequences
-Animation0:	ds 1	; Stored in $9B
-Animation1: ds 1    ; $9C
+Animation0:	ds 1	; 
+Animation1: ds 1    ; 
 
     ; Local animation indexes for Che animation
     
-AnimateHor0:    ds 1    ; $9D
-AnimateUp0:     ds 1    ; $9E
-AnimateDown0:   ds 1    ; $9F
+AnimateHor0:    ds 1
+AnimateUp0:     ds 1
+AnimateDown0:   ds 1
 
-AnimFrameCounter:   ds 1    ; $A0
+AnimFrameCounter:   ds 1
 
 
     ; Scratch Variable
-CheGfxTemp:     ds 1    ; $B3
-EnvGfxTemp:     ds 1    ; $B4
+CheGfxTemp:     ds 1
+EnvGfxTemp:     ds 1
 CheClrTemp:     ds 1
 EnvClrTemp:     ds 1
 
-Temp2:          ds 1    ; $B5 -- Scratch variable for animation. May remove.
+Temp2:          ds 1    ; -- Scratch variable for animation. May remove.
 
     ; Playfield Scanline Height and Colour
 
 ; Playfield colour pointer
-PFColourPtr:    ds 2    ; $B6-$B7
+PFColourPtr:    ds 2
 
 ; Playfield bands heights
-Heights:        ds 5    ; $B8-$BC
+Heights:        ds 4
 
 ;==============Graphics Y positions==============
-;=========== in $BD to C2 =======================
 
 ; Che Y Offsets
 CheY:  ds 1    ; $BD
 
 ; Environment Y Offsets
-EnvGfxOffset:   ds 5    ; $C2
+EnvGfxOffset:   ds 4    ; $C2
 
     ; X and Y variables for returning Player0 to collision position
     
 SavedX:         ds 1    ; $C3
 SavedY:         ds 1    ; $C4
 
-    ; Heights of Evironment Graphics
-    
-EnvHeight:      ds 5    ; $C9
+;=========Random Generation Variables============
+
+Rand8:          ds 1
+Rand16:         ds 1
+
+;======Overworld Map Coordinate Variables========
+CheMapX:        ds 1
+CheMapSavedX:   ds 1
+CheMapY:        ds 1
+CheMapSavedY:   ds 1
 
     ENDM
