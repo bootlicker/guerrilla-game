@@ -2,6 +2,7 @@
     
 Random:
 
+
 ;=================================
 ; Process Map Movement
 ;
@@ -9,6 +10,8 @@ Random:
 ;   RLDUXXXX    - RIGHT LEFT DOWN UP
 ;
 ;=================================
+
+ProcessMapMovement:
 
     lda Map_Coords
     
@@ -23,17 +26,16 @@ Random:
 ;=================================
 ; Has Che Moved Off the Right Edge of Screen?
 ;=================================    
-
-    asl                 ; Put R in the carry bit
-    bcc CheckMapLeft    ; If R wasn't 1, then check for L
     
+    clc
+    rol                 ; Put R in the carry bit
+    bcc CheckMapLeft    ; If R wasn't 1, then check for L
     ldy CheMapX
     iny             ; Move ObjectX right
     
-    cpy #100        ; Test for edge of map.
-    bne SaveMapX    ; If not at edge of the map, save X map coordinate.
-    
-    ldy #0          ; Else, wrap to the left edge.
+;    cpy #0          
+;    bne SaveMapX    
+;    ldy #0          
     
 SaveMapX:
 
@@ -44,17 +46,16 @@ SaveMapX:
 ;=================================    
                     
 CheckMapLeft:
-    asl                 ; Shift A one bit left. Now L is in the carry bit.
+    rol                 ; Shift A one bit left. Now L is in the carry bit.
     bcc CheckMapDown    ; Branch if no left map movement.
-
-    ldy CheMapX     ; Get X position
-    dey             ; Move it left
+    ldy CheMapX         ; Get X position
+    dey                 ; Move it left
     
-    cpy #255            ; Test for left edge of map
-    bne SaveMapX2       ; Save X if not at edge of map
+;    cpy #255        - We don't need this code, because the 
+;    bne SaveMapX2   - numerical limit of the registers in 
+;    ldy #255        - this CPU equal the numerical limit
+;                    - of the size of the map!    
 
-    ldy #99        ; Else wrap to right edge
-    
 SaveMapX2:
 
     sty CheMapX
@@ -65,13 +66,14 @@ SaveMapX2:
 
 CheckMapDown:
 
-    asl             ; Shift A one bit left. D is in carry.
+    rol             ; Shift A one bit left. D is in carry.
     bcc CheckMapUp  ; Branch if no down map movement.
     ldy CheMapY     ; Get object's Y position
     iny             ; Move it down
-    cpy #100        ; Test for bottom of map
-    bne SaveMapY    ; Save Y if we're not at botom
-    ldy #0          ; Else wrap to top (is this right?)
+
+;    cpy #100        
+;    bne SaveMapY    
+;    ldy #0          
     
 SaveMapY:
     
@@ -83,34 +85,103 @@ SaveMapY:
 
 CheckMapUp:
 
-    asl             ; Shift A one bt left. U is in now in carry.
+    rol             ; Shift A one bt left. U is in now in carry.
     bcc MapMoveDone ; Branch if no up map movement. Only one player for now.
     ldy CheMapY     ; Get Y position
     dey             ; Move it up.
-    cpy #255        ; Test for top of map 
-    bne SaveMapY2   ; Save Y if we're not at top
-    ldy #99         ; Else wrap to bottom.
+
+;    cpy #255        
+;    bne SaveMapY2   
+;    ldy #99         
     
 SaveMapY2:
 
     sty CheMapY     ; Save Y.
-
+    
 .MapMoveDone
+    
+;=================================
+; Forming the input of the Random Number Generator
+;=================================
 
-.ShiftDown
-        ldx #100
+; Bit 5 of Map_Coords, the Up bit, is in the carry bit.
+; The status register should look like this now:
+;
+; C76543210
+; UXXXX0RLD
 
-.ShiftRight
-        lda Rand8   ; 3  3
-        lsr         ; 2  5
-        rol Rand16  ; 5 10
-        bcc noeor   ; 2 12
-        eor #$D4    ; 2 14 - $D4 is the only number I know the inverse to 
-.noeor              ;
-        sta Rand8   ; 3 17
-        eor Rand16  ; 3 20
+;==================================
+;Is the UP flag set in Map_Coords?
+;==================================
 
-.ShiftLeft
+    bcc CheckRNG_Down   ; If UP flag not set, check DOWN flag
+    ldx #0
+    jmp ShiftBackwards
+    
+.CheckRNG_Down
+
+    ror                 ; Put D in carry bit
+    bcc CheckRNG_Left   ; If DOWN flag not set, check LEFT flag
+    ldx #0
+    jmp ShiftForwards
+    
+.CheckRNG_Left
+
+    ror                 ; Put L in carry bit
+    bcc CheckRNG_Right  ; If LEFT flag not set, check RIGHT flag
+    ldx #255
+    jmp ShiftBackwards
+    
+.CheckRNG_Right
+
+    ror           ; Put R in carry bit
+    bcc No_RNG    ; If RIGHT flag not set, then no flags set, then exit
+    ldx #255
+    
+;=================================
+; Wait for Vertical Blank to End
+;=================================
+
+; What we're going to do is use up a blank frame of kernel time
+; in order to have enough time to calculate a full row of screens:
+; 256 positions on the RNG counter.
+
+	lda #$00        ; 2 13
+	sta COLUBK      ; 3 16
+
+RNGStartWait:
+	
+    sta WSYNC
+;---------------------------------
+	lda INTIM		    ; 4  4
+	bne RNGStartWait    ; 2  6
+	sta VBLANK		    ; 3  9 - Accumulator D1=0
+
+;=================================
+; Set timer for blank frame
+;
+; (192 * 76) / 64 = 228
+;=================================
+
+RNG_Timer:
+	ldx #228
+	stx TIM64T
+
+ShiftForwards:
+    lda Rand8   ; 3  3
+    lsr         ; 2  5
+    rol Rand16  ; 5 10
+    bcc noeor   ; 2 12
+    eor #$D4    ; 2 14 - $D4 is the only number I know the inverse to 
+
+.noeor          ;
+    sta Rand8   ; 3 17
+    eor Rand16  ; 3 20
+    
+; t
+
+ShiftBackwards:
+
         lda Rand8
         lsr
         rol Rand16
@@ -119,3 +190,14 @@ SaveMapY2:
 .noeorleft 
         sta Rand8
         eor Rand16
+        
+RNGFinishWait:
+	
+    sta WSYNC
+;---------------------------------
+	lda INTIM		; 4  4
+	bne RNGWait     ; 2  6
+        
+NoRNG:
+
+; Alright! We're outta here!

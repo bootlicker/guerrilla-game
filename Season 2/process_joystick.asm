@@ -34,7 +34,15 @@ ProcessJoystick:
     cpy #160        ; Test for edge of screen
     bne SaveX       ; If not at edge of screen, save X position
     
-    ldy #0          ; Else, wrap to the left edge.
+    ldy #8          ; Else, wrap to the left edge. 
+                    ; (8 pixels in, so that you can 
+                    ; see the whole width of Che.
+    
+; Set the Map_Coords flag bit to tell the program
+; to calculate the next screen in the RNG sequence.
+
+    ldx #%10000000
+    stx Map_Coords
     
 SaveX:
 
@@ -60,6 +68,12 @@ CheckLeft:
 
     ldy #159        ; Else wrap to right edge
     
+; Set the Map_Coords flag bit to tell the program
+; to calculate the next screen in the RNG sequence.
+
+    ldx #%01000000
+    stx Map_Coords
+    
 SaveX2:
 
     sty ObjectX
@@ -80,6 +94,13 @@ CheckDown:
     cpy #P0_HEIGHT  ; Test for bottom of screen
     bne SaveY       ; Save Y if we're not at botom
     ldy #PF_HEIGHT  ; Else wrap to top (is this right?)
+
+; Set the Map_Coords flag bit to tell the program
+; to calculate the next screen in the RNG sequence.
+
+    ldx #%00100000
+    stx Map_Coords
+    
     
 SaveY:
     
@@ -98,6 +119,12 @@ CheckUp:
     cpy #PF_HEIGHT  ; Test for top of screen (is this right?)
     bne SaveY2      ; Save Y if we're not at top
     ldy #P0_HEIGHT  ; Else wrap to bottom.
+
+; Set the Map_Coords flag bit to tell the program
+; to calculate the next screen in the RNG sequence.
+
+    ldx #%00010000
+    stx Map_Coords
     
 SaveY2:
 
