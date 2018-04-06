@@ -95,8 +95,86 @@ InitSystem:
 Main:
 
     jsr VerticalSync
-    jsr VerticalBlank
-    jsr Kernel
+
+
+;================
+; Vertical Blank
+; --------------
+; Game Logic
+;================
+
+VerticalBlank:
+    
+    PROCESS_JOYSTICK    ; This sets the X and Y variables for Che Guevara, GRP0.
+                        ; It also sets flags if the boundary of a screen has been crossed.
+                        
+    UPDATE_MAP          ; This logic takes the flags set in PROCESS_JOYSTICK and
+                        ; checks them to see if the map coordinates need updating.
+                        
+    DO_WE_PERFORM_RNG   ; This logic takes the flags set in PROCESS_JOYSTICK and performs
+                        ; the random generation needed to set the pointers for the
+                        ; right objects to appear on the screen for the correct map cell.
+                        ;
+                        ; It branches down to [No_RNG] if we have not moved into a new
+                        ; map cell. No new map cell means no new random generation, and
+                        ; that means we don't draw a blank frame.
+    
+                        
+                        ; If we DO need to perform random generation, to update the
+                        ; pointers for the Environment Graphics, then we "fall into"
+                        ; the code below.
+
+Skip_Kernel:
+                        
+    SKIP_KERNEL         ;  ---  <--SKIP_KERNEL macro is logic that will wait until 
+                        ;   |
+    rts                 ;   |
+                        ;   |      the end of Vertical Blank, 
+Random:                 ;   |      and then start a timer for a full blank frame.
+                        ;   |
+    RANDOM_GENERATION   ;<--|---- We actually fall into THIS logic, but this logic calls
+                        ;   |     Skip_Kernel as a subroutine.
+                        ;   |
+LevelProcessing:        ;   |------BLANK FRAME HERE
+                        ;   |
+    LEVEL_PROCESSING    ;<--|---- not much actual logic going on here, will move this.
+                        ;   |
+EnvGfx_Pointers:        ;   |
+                        ;   |
+    ENVGFX_POINTERS     ;   |
+                        ;   |
+RNGFinishWait:          ;   |
+                        ;   |
+    RNG_FINISH_WAIT     ;  ---  <--RNG_FINISH_WAIT macro is logic that will wait
+                        ;          until end of the blank frame.
+    
+    jmp Skip_to_OverScan; DON'T DRAW THE KERNEL AFTER RNG.
+                        ; WE HAVE ALREADY USED UP AN ENTIRE
+                        ; FRAME OF KERNEL TIME.
+                        ;
+                        ; I am worried that this jump is going to be too large.
+                        ; We'll check this after I have compiled.
+NoRNG:
+    POSITION_ANIMATE_CHE
+    X_COORDS_FOR_ENVGFX
+    
+;=================================
+;
+; KERNEL
+;
+;=================================
+    
+Kernel:
+    
+    sta HMCLR           ; Reset the horizontal movement registers
+                        ; so the HMOVEs for GRP1 in the kernel don't
+                        ; interfere with the HMOVE we made for GRP0
+                        ; in VBLANK.
+
+    KERNEL_IMPLEMENTED
+
+Skip_to_OverScan:
+
     jsr OverScan
     jmp Main
 
@@ -127,115 +205,13 @@ VerticalSync:
 Sleep12:	; JSR here to sleep for 12 cycles
 	rts
     
-;================
-; Vertical Blank
-; --------------
-; Game Logic
-;================
 
-VerticalBlank:
-    
-    LEVEL_PROCESSING
-    PROCESS_JOYSTICK
-    POSITION_OBJECTS
-    
-    sta HMCLR           ; Reset the horizontal movement registers
-                        ; so the HMOVEs for GRP1 in the kernel don't
-                        ; interfere with the HMOVE we made for GRP0
-                        ; in VBLANK.
-	
-	rts
-    
-ShapePtrLow:
-    .byte <(CheHorizontal0)     ; 0
-    .byte <(CheHorizontal1)     ; 1
-    .byte <(CheHorizontal2)     ; 2
-    .byte <(CheFrontLeftStand)  ; 3
-    .byte <(CheFrontRightStep)  ; 4
-    .byte <(CheFrontRightStand) ; 5
-    .byte <(CheFrontLeftStep)   ; 6
-    .byte <(CheBackLeftStand)  ; 7
-    .byte <(CheBackRightStep)  ; 8
-    .byte <(CheBackRightStand) ; 9
-    .byte <(CheBackLeftStep)   ; 10
-
-        
-ShapePtrHi:
-    .byte >(CheHorizontal0)     ; 0
-    .byte >(CheHorizontal1)     ; 1
-    .byte >(CheHorizontal2)     ; 2
-    .byte >(CheFrontLeftStand)  ; 3
-    .byte >(CheFrontRightStep)  ; 4
-    .byte >(CheFrontRightStand) ; 5
-    .byte >(CheFrontLeftStep)   ; 6
-    .byte >(CheBackLeftStand)  ; 7
-    .byte >(CheBackRightStep)  ; 8
-    .byte >(CheBackRightStand) ; 9
-    .byte >(CheBackLeftStep)   ; 10
-
-        
-ColourPtrLow:
-    .byte <(CheHorizontalClr0)
-    .byte <(CheHorizontalClr1)
-    .byte <(CheHorizontalClr2)
-    .byte <(CheFrontLeftStandClr)  ; 3
-    .byte <(CheFrontRightStepClr)  ; 4
-    .byte <(CheFrontRightStandClr) ; 5
-    .byte <(CheFrontLeftStepClr)   ; 6
-    .byte <(CheBackLeftStandClr)  ; 7
-    .byte <(CheBackRightStepClr)  ; 8
-    .byte <(CheBackRightStandClr) ; 9
-    .byte <(CheBackLeftStepClr)   ; 10
-
-    
-ColourPtrHi:
-    .byte >(CheHorizontalClr0)
-    .byte >(CheHorizontalClr1)
-    .byte >(CheHorizontalClr2)
-    .byte >(CheFrontLeftStandClr)  ; 3
-    .byte >(CheFrontRightStepClr)  ; 4
-    .byte >(CheFrontRightStandClr) ; 5
-    .byte >(CheFrontLeftStepClr)   ; 6
-    .byte >(CheBackLeftStandClr)  ; 7
-    .byte >(CheBackRightStepClr)  ; 8
-    .byte >(CheBackRightStandClr) ; 9
-    .byte >(CheBackLeftStepClr)   ; 10
 
 ;=================================
-; Kernel
-;
-; The flow of the kernel works like this:
-;
-; 1. Blank out the playfield
-; 
+; Pointer Logic For Che's Graphics
 ;=================================
-
-Kernel:
-
-    lda #0			; 2  2
-	sta PF0			; 3  5
-	sta PF1			; 3  8
-	sta PF2         ; 3 11
 	
-	lda #$D2        ; 2 13
-	sta COLUBK      ; 3 16
-
-KernelWait:
-	
-    sta WSYNC
-;---------------------------------
-	lda INTIM		; 4  4
-	bne KernelWait  ; 2  6
-	sta VBLANK		; 3  9 - Accumulator D1=0
-
-;------------------------------------------------------
-
-    SCREEN_BANDS 3
-    SCREEN_BANDS 2
-    SCREEN_BANDS 1
-    SCREEN_BANDS 0
-
-    rts
+    CHE_POINTERS
     
 ;=================================
 ;=================================
@@ -251,7 +227,7 @@ KernelWait:
 
 ; ENVIRONMENT PLACEHOLDER GRAPHICS
 Number_0
-    ds 15, $00
+    ds 38, $00
     
     .byte #%11100111
     .byte #%10100101
@@ -263,7 +239,7 @@ Number_0
     .byte #%11100111
     
 Number_1
-    ds 15, $00
+    ds 38, $00
     
     .byte #%11100111
     .byte #%01000010
@@ -275,7 +251,7 @@ Number_1
     .byte #%11000110
     
 Number_2
-    ds 15, $00
+    ds 38, $00
     
     .byte #%11100111
     .byte #%10000100
@@ -287,7 +263,7 @@ Number_2
     .byte #%11100111    
 
 Number_3
-    ds 15, $00
+    ds 38, $00
     
     .byte #%11100111
     .byte #%00100001
@@ -299,7 +275,7 @@ Number_3
     .byte #%11100111    
 
 Number_4
-    ds 15, $00
+    ds 38, $00
     
     .byte #%00100001
     .byte #%00100001
@@ -311,7 +287,7 @@ Number_4
     .byte #%10100101    
 
 Number_5
-    ds 15, $00
+    ds 38, $00
     
     .byte #%11100111
     .byte #%00100001
@@ -323,7 +299,7 @@ Number_5
     .byte #%11100111    
 
 Number_6
-    ds 15, $00
+    ds 38, $00
     
     .byte #%11100111
     .byte #%10100101
@@ -335,7 +311,7 @@ Number_6
     .byte #%11100111
     
 Number_7
-    ds 15, $00
+    ds 38, $00
     
     .byte #%01000010
     .byte #%01000010
@@ -347,7 +323,7 @@ Number_7
     .byte #%11100111    
 
 Number_8
-    ds 15, $00
+    ds 38, $00
     
     .byte #%11100111
     .byte #%10100101
@@ -359,7 +335,7 @@ Number_8
     .byte #%11100111    
 
 Number_9
-    ds 15, $00
+    ds 38, $00
     
     .byte #%11100111
     .byte #%00100001
@@ -371,7 +347,7 @@ Number_9
     .byte #%11100111
     
 Number_A
-    ds 15, $00
+    ds 38, $00
     
     .byte #%10100101
     .byte #%10100101
@@ -384,7 +360,7 @@ Number_A
 
 
 Number_B
-    ds 15, $00
+    ds 38, $00
     
     .byte #%11000110
     .byte #%10100101
@@ -396,7 +372,7 @@ Number_B
     .byte #%11000110
     
 Number_C
-    ds 15, $00
+    ds 38, $00
     
     .byte #%11100111
     .byte #%10000100
@@ -408,7 +384,7 @@ Number_C
     .byte #%11100111    
 
 Number_D
-    ds 15, $00
+    ds 38, $00
     
     .byte #%11000110
     .byte #%10100101
@@ -420,7 +396,7 @@ Number_D
     .byte #%11000110
     
 Number_E
-    ds 15, $00
+    ds 38, $00
     
     .byte #%11100111
     .byte #%10000100
@@ -432,7 +408,7 @@ Number_E
     .byte #%11100111
 
 Number_F
-    ds 15, $00
+    ds 38, $00
     
     .byte #%10000100
     .byte #%10000100
@@ -442,53 +418,10 @@ Number_F
     .byte #%10000100
     .byte #%10000100
     .byte #%11100111
-
-    
-BatistaSoldierImg
-    ds 15, $00
-    
-    .byte $6C ; | XX XX  |
-    .byte $28 ; |  X X   |
-    .byte $28 ; |  X X   |
-    .byte $6C ; | XX XX  |
-    .byte $6C ; | XX XX  |
-    .byte $6C ; | XX XX  |
-    .byte $7C ; | XXXXX  |
-    .byte $7C ; | XXXXX  |
-    .byte $38 ; |  XXX   |
-    .byte $7C ; | XXXXX  |
-    .byte $3C ; |  XXXX  |
-    .byte $76 ; | XXX XX |
-    .byte $F2 ; |XXXX  X |
-    .byte $EA ; |XXX X X |
-    .byte $DE ; |XX XXXX |
-    .byte $FC ; |XXXXXX  |
-    .byte $38 ; |  XXX   |
-    .byte $78 ; | XXXX   |
-    .byte $30 ; |  XX    |
-    .byte $78 ; | XXXX   |
-    .byte $78 ; | XXXX   |
-    .byte $58 ; | X XX   |
-    .byte $30 ; |  XX    |
 
 BatistaSoldierClr
-    ds 15, $00
+    ds 38, $00
 
-    .byte $FE
-    .byte $FE
-    .byte $FE
-    .byte $FE
-    .byte $FE
-    .byte $FE
-    .byte $FE
-    .byte $FE
-    .byte $FE
-    .byte $FE
-    .byte $FE
-    .byte $FE
-    .byte $FE
-    .byte $FE
-    .byte $FE
     .byte $FE
     .byte $FE
     .byte $FE

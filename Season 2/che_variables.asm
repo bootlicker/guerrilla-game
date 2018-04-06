@@ -84,8 +84,9 @@ Rand16:         ds 1
 
 ;======Overworld Map Coordinate Variables========
 CheMapX:        ds 1
-CheMapSavedX:   ds 1
 CheMapY:        ds 1
-CheMapSavedY:   ds 1
+
+Rand_Pointer_Calc8:     ds 1
+Rand_Pointer_Calc16:    ds 1
 
     ENDM

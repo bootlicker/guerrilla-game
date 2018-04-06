@@ -1,173 +1,18 @@
+
     MAC RANDOM_GENERATION
     
-Random:
-
-
 ;=================================
-; Process Map Movement
-;
-;   76543210
-;   RLDUXXXX    - RIGHT LEFT DOWN UP
-;
+; Random Number Generator Routine
 ;=================================
 
-ProcessMapMovement:
-
-    lda Map_Coords
-    
-; Store Che's map position just in case
-; we need to return him to the last map screen.
-    
-    ldy CheMapX
-    sty CheMapSavedX
-    ldy CheMapY
-    sty CheMapSavedY
-    
-;=================================
-; Has Che Moved Off the Right Edge of Screen?
-;=================================    
-    
-    clc
-    rol                 ; Put R in the carry bit
-    bcc CheckMapLeft    ; If R wasn't 1, then check for L
-    ldy CheMapX
-    iny             ; Move ObjectX right
-    
-;    cpy #0          
-;    bne SaveMapX    
-;    ldy #0          
-    
-SaveMapX:
-
-    sty CheMapX     ; Save X position
-    
-;=================================
-; Has Che Moved Off Left Edge of Screen?
-;=================================    
-                    
-CheckMapLeft:
-    rol                 ; Shift A one bit left. Now L is in the carry bit.
-    bcc CheckMapDown    ; Branch if no left map movement.
-    ldy CheMapX         ; Get X position
-    dey                 ; Move it left
-    
-;    cpy #255        - We don't need this code, because the 
-;    bne SaveMapX2   - numerical limit of the registers in 
-;    ldy #255        - this CPU equal the numerical limit
-;                    - of the size of the map!    
-
-SaveMapX2:
-
-    sty CheMapX
-
-;=================================
-; Has Che Moved Off Bottom Edge of Screen?
-;=================================    
-
-CheckMapDown:
-
-    rol             ; Shift A one bit left. D is in carry.
-    bcc CheckMapUp  ; Branch if no down map movement.
-    ldy CheMapY     ; Get object's Y position
-    iny             ; Move it down
-
-;    cpy #100        
-;    bne SaveMapY    
-;    ldy #0          
-    
-SaveMapY:
-    
-    sty CheMapY     ; Save Y.
-    
-;=================================
-; Has Che Moved Off Top Edge of Screen?
-;=================================    
-
-CheckMapUp:
-
-    rol             ; Shift A one bt left. U is in now in carry.
-    bcc MapMoveDone ; Branch if no up map movement. Only one player for now.
-    ldy CheMapY     ; Get Y position
-    dey             ; Move it up.
-
-;    cpy #255        
-;    bne SaveMapY2   
-;    ldy #99         
-    
-SaveMapY2:
-
-    sty CheMapY     ; Save Y.
-    
-.MapMoveDone
-    
-;=================================
-; Forming the input of the Random Number Generator
-;=================================
-
-; Bit 5 of Map_Coords, the Up bit, is in the carry bit.
-; The status register should look like this now:
-;
-; C76543210
-; UXXXX0RLD
-
-;==================================
-;Is the UP flag set in Map_Coords?
-;==================================
-
-    bcc CheckRNG_Down   ; If UP flag not set, check DOWN flag
-    ldx #0
-    jmp ShiftBackwards
-    
-.CheckRNG_Down
-
-    ror                 ; Put D in carry bit
-    bcc CheckRNG_Left   ; If DOWN flag not set, check LEFT flag
-    ldx #0
-    jmp ShiftForwards
-    
-.CheckRNG_Left
-
-    ror                 ; Put L in carry bit
-    bcc CheckRNG_Right  ; If LEFT flag not set, check RIGHT flag
-    ldx #255
-    jmp ShiftBackwards
-    
-.CheckRNG_Right
-
-    ror           ; Put R in carry bit
-    bcc No_RNG    ; If RIGHT flag not set, then no flags set, then exit
-    ldx #255
-    
-;=================================
-; Wait for Vertical Blank to End
-;=================================
-
-; What we're going to do is use up a blank frame of kernel time
-; in order to have enough time to calculate a full row of screens:
-; 256 positions on the RNG counter.
-
-	lda #$00        ; 2 13
-	sta COLUBK      ; 3 16
-
-RNGStartWait:
-	
-    sta WSYNC
-;---------------------------------
-	lda INTIM		    ; 4  4
-	bne RNGStartWait    ; 2  6
-	sta VBLANK		    ; 3  9 - Accumulator D1=0
-
-;=================================
-; Set timer for blank frame
-;
-; (192 * 76) / 64 = 228
-;=================================
-
-RNG_Timer:
-	ldx #228
-	stx TIM64T
+; SHIFT FORWARDS 
 
 ShiftForwards:
+
+    jsr Skip_Kernel
+
+.ShiftForwardsLoop
+    
     lda Rand8   ; 3  3
     lsr         ; 2  5
     rol Rand16  ; 5 10
@@ -178,26 +23,131 @@ ShiftForwards:
     sta Rand8   ; 3 17
     eor Rand16  ; 3 20
     
-; t
+    inx
+    clc
+    bne ShiftForwardsLoop
+    beq Pointer_Calc
+    
+; SHIFT BACKWARDS
 
 ShiftBackwards:
 
-        lda Rand8
-        lsr
-        rol Rand16
-        bcc noeorleft
-        eor #$A9    ; $D4 is the only number I know the inverse to 
+    jsr Skip_Kernel
+
+.ShiftBackwardsLoop
+    
+    lda Rand8
+    lsr
+    rol Rand16
+    bcc noeorleft
+    eor #$A9    ; $D4 is the only number I know the inverse to 
+
 .noeorleft 
-        sta Rand8
-        eor Rand16
+    sta Rand8
+    eor Rand16
         
-RNGFinishWait:
-	
-    sta WSYNC
-;---------------------------------
-	lda INTIM		; 4  4
-	bne RNGWait     ; 2  6
-        
-NoRNG:
+    inx
+    clc
+    bne ShiftBackwardsLoop
+    beq Pointer_Calc
+
+;================================================
+; Translation of the output of the random number
+; generator into a useful index for selecting
+; a random object in ROM.
+; 
+; Here we:
+; - Buffer the output of the RNG into RAM
+; - Enter into a 4 cycle loop, which masks off
+;   different portions of the 16 bit random number
+;   so that a number between 0-63 is produced.
+;
+; This translates the random number output into
+; an index that is 64 positions long, and allows
+; us to randomly select 4 different objects from
+; that 64 bit number.
+;
+; A second level of randomness could be introduced
+; by generating an 8 bit random number, and masking
+; THOSE bits off. But that would make the game
+; impossible to seed the same way every time.
+;
+;================================================
+    
+Pointer_Calc:
+    
+    ldy #3
+    
+.Pointer_Calc_Loop
+
+    ldx Rand8
+    stx Rand_Pointer_Calc8
+    
+    ldx Rand16
+    stx Rand_Pointer_Calc16
+    
+    cpy #3
+    beq Band_3_Calc
+    cpy #2
+    beq Band_2_Calc
+    cpy #1
+    beq Band_1_Calc
+    cpy #0
+    beq Band_0_Calc
+    
+.Band_3_Calc
+
+    lda Rand_Pointer_Calc16
+    and #%11111100
+    lsr
+    lsr
+    sta Band_3_Index
+
+    jmp Done_Calc
+    
+.Band_0_Calc
+
+    lda Rand_Pointer_Calc8
+    and #%00111111
+    sta Band_0_Index
+    jmp Done_Calc
+    
+.Band_2_Calc
+
+    lda Rand_Pointer_Calc16
+    and #%00000111
+    sta Rand_Pointer_Calc16
+    
+    lda Rand_Pointer_Calc8
+    and #%11100000
+    lsr
+    lsr
+    clc
+    and Rand_Pointer_Calc16
+    sta Band_2_Index
+    
+    
+    jmp Done_Calc
+
+.Band_1_Calc
+
+    lda Rand_Pointer_Calc16
+    and #%0011100
+    asl
+    sta Rand_Pointer_Calc16
+    
+    lda Rand_Pointer_Calc8
+    and #%0011100
+    lsr
+    lsr
+    and Rand_Pointer_Calc16
+    sta Band_1_Index
+
+.Done_Calc    
+
+    dey
+    bpl Pointer_Calc_Loop
 
 ; Alright! We're outta here!
+
+    ENDM
