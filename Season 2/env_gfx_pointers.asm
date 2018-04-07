@@ -1,18 +1,43 @@
 
     MAC ENVGFX_POINTERS
 
-    ; Now we need to index the Environment
-    ; graphics so that they show up at the right
-    ; Y position. We will set them here STATICALLY
-    ; for now. They will all be set 5 scan lines
-    ; from the top of each band.
-
-    ; BAND 0
+    ; Now we need to translate the different
+    ; Band_X_Index numbers into the debugging symbols.
     
-    lda #<BatistaSoldierImg
-    sta EnvGfxPtr
-    lda #>BatistaSoldierImg
-    sta EnvGfxPtr+1
+    
+    lda Band_0_Index
+    and #%11110000
+    sta Band_0_Index16s
+    
+    lda Band_0_Index
+    and #%00001111
+    sta Band_0_Index
+    
+    lda Band_1_Index
+    and #%11110000
+    sta Band_1_Index16s
+    
+    lda Band_1_Index
+    and #%00001111
+    sta Band_1_Index
+    
+    lda Band_2_Index
+    and #%11110000
+    sta Band_2_Index16s
+    
+    lda Band_2_Index
+    and #%00001111
+    sta Band_2_Index
+
+    lda Band_3_Index
+    and #%11110000
+    sta Band_3_Index16s
+    
+    lda Band_3_Index
+    and #%00001111
+    sta Band_3_Index
+    
+    ; BAND 0
     
     lda #<BatistaSoldierClr
     sta EnvClrPtr
@@ -23,16 +48,6 @@
 ; BANDS 1-3
 ;=================================
 
-    lda EnvGfxPtr
-    sta EnvGfxPtr+2
-    sta EnvGfxPtr+4
-    sta EnvGfxPtr+6
-    
-    lda EnvGfxPtr+1
-    sta EnvGfxPtr+3
-    sta EnvGfxPtr+5
-    sta EnvGfxPtr+7
-    
     lda EnvClrPtr
     sta EnvClrPtr+2
     sta EnvClrPtr+4
@@ -46,4 +61,40 @@
     ; Now we set the X positions of the
     ; environment graphics.
 
+EnvGfxPtrTableLow:
+    .byte <(Number_0)   ; 0
+    .byte <(Number_1)   ; 1
+    .byte <(Number_2)   ; 2
+    .byte <(Number_3)   ; 3
+    .byte <(Number_4)   ; 4
+    .byte <(Number_5)   ; 5
+    .byte <(Number_6)   ; 6
+    .byte <(Number_7)   ; 7
+    .byte <(Number_8)   ; 8
+    .byte <(Number_9)   ; 9
+    .byte <(Number_A)   ; 10
+    .byte <(Number_B)   ; 11
+    .byte <(Number_C)   ; 12
+    .byte <(Number_D)   ; 13
+    .byte <(Number_E)   ; 14
+    .byte <(Number_F)   ; 15
+        
+EnvGfxPtrTableHi:
+    .byte >(Number_0)   ; 0
+    .byte >(Number_1)   ; 1
+    .byte >(Number_2)   ; 2
+    .byte >(Number_3)   ; 3
+    .byte >(Number_4)   ; 4
+    .byte >(Number_5)   ; 5
+    .byte >(Number_6)   ; 6
+    .byte >(Number_7)   ; 7
+    .byte >(Number_8)   ; 8
+    .byte >(Number_9)   ; 9
+    .byte >(Number_A)   ; 10
+    .byte >(Number_B)   ; 11
+    .byte >(Number_C)   ; 12
+    .byte >(Number_D)   ; 13
+    .byte >(Number_E)   ; 14
+    .byte >(Number_F)   ; 15
+    
     ENDM

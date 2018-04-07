@@ -82,11 +82,23 @@ SavedY:         ds 1    ; $C4
 Rand8:          ds 1
 Rand16:         ds 1
 
+Rand_Pointer_Calc8:     ds 1
+Rand_Pointer_Calc16:    ds 1
+
+Band_0_Index:   ds 1
+Band_1_Index:   ds 1
+Band_2_Index:   ds 1
+Band_3_Index:   ds 1
+
+Band_0_Index16s:   ds 1
+Band_1_Index16s:   ds 1
+Band_2_Index16s:   ds 1
+Band_3_Index16s:   ds 1
+
 ;======Overworld Map Coordinate Variables========
+Map_Coords:     ds 1
 CheMapX:        ds 1
 CheMapY:        ds 1
 
-Rand_Pointer_Calc8:     ds 1
-Rand_Pointer_Calc16:    ds 1
 
     ENDM

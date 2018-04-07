@@ -8,15 +8,39 @@
 
 	include macro.h
 	
-    include che_variables.asm
+    include che_variables.asm      
 	
 	include che_kernel_macro.asm
 	
-	include level_processing.asm
+	include che_kernel_macro_debug.asm
+	
+	include kernel_implemented.asm
+	
+	include kernel_implemented_debug.asm
+	
+	include position_animate_che.asm
+	
+	include skip_kernel.asm
+	
+	include rng_finish_wait.asm
+	
+	include update_map_coords.asm
+	
+	include do_we_perform_rng.asm
+	
+	include random_generation.asm
+	
+	include level_processing.asm   
+	
+	include x_coords_for_envgfx.asm
+	
+	include env_gfx_pointers.asm
 	
 	include process_joystick.asm
 	
 	include position_objects.asm
+	
+	include che_pointers.asm
 	
 	include che_mask.asm
 	
@@ -171,7 +195,7 @@ Kernel:
                         ; interfere with the HMOVE we made for GRP0
                         ; in VBLANK.
 
-    KERNEL_IMPLEMENTED
+    KERNEL_IMPLEMENTED_DEBUG
 
 Skip_to_OverScan:
 
@@ -419,7 +443,7 @@ Number_F
     .byte #%10000100
     .byte #%11100111
 
-BatistaSoldierClr
+EnvGfxClrTable
     ds 38, $00
 
     .byte $FE
