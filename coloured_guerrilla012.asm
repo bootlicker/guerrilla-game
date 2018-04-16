@@ -12,7 +12,7 @@
 ; Define Constants
 ;==================
 
-PF_HEIGHT	= 192
+PF_HEIGHT	= 95  ; = 192/2, because we are using a 2LK
 
 P0_HEIGHT   = 25
 
@@ -25,11 +25,11 @@ P0_HEIGHT   = 25
 
 	ORG $80
 
-	; Object X positions in $80
-ObjectX:	ds 1	; player0
+	; Object X positions in $
+ObjectX:	ds 4	; player0, 3 x player1 objects
 
-	; Object Y positions in $81
-ObjectY:	ds 1	; player0
+	; Object Y positions in $
+ObjectY:	ds 4	; player0, 3 x player1 objects
 
 	; DoDraw Graphic Pointers in $86-87
 Player0Ptr:	ds 2	; Used for drawing player0
@@ -145,8 +145,13 @@ VerticalSync:
 	sta PF0
 	sta PF1
 	sta PF2
-	sta GRP0
-	sta GRP1
+	
+	sta GRP0   ; Blanks GRP0 if VDELP0 was off 
+	sta GRP1   ; Blanks GRP0 if VDELP0 was on, or blanks GRP1 if VDELP1 was off 
+	sta GRP0   ; Blanks GRP1 if VDELP1 was on
+	sta VDELP0 ; turn off vertical delay
+	sta VDELP1 ; turn off vertical delay
+	
 	sta WSYNC
 	sta VSYNC
 
@@ -243,7 +248,7 @@ CheckDown:
     bcs CheckUp     ; Branch if joystick not held down.
     ldy ObjectY     ; Get object's Y position
     iny             ; Move it down
-    cpy #PF_HEIGHT; Test for bottom of screen
+    cpy #PF_HEIGHT*2+2  ; Test for bottom of screen
     bne SaveY       ; Save Y if we're not at botom
     ldy #P0_HEIGHT  ; Else wrap to top (is this right?)
     
@@ -263,7 +268,7 @@ CheckUp:
     dey             ; Move it up.
     cpy #P0_HEIGHT  ; Test for top of screen (is this right?)
     bne SaveY2      ; Save Y if we're not at top
-    ldy #PF_HEIGHT  ; Else wrap to bottom.
+    ldy #PF_HEIGHT*2+2  ; Else wrap to bottom.
     
 SaveY2:
 
@@ -285,37 +290,44 @@ OnePlayer:
 
 PositionObjects:
 
-
-;
-; Prep player's Y position
-    
-    lda ObjectY
-    sta Player0Offset
-    sta Temp2
-    
-    
-
-    ldx #1          ; We're only gonna position GRP0 + GRP1
+    ldx #1          ; We're only gonna position GRP0 and one version of GRP1
 
 .p0loop
     
-    lda ObjectX
+    lda ObjectX,x
     jsr PosObject
     
     dex
-    bmi .XPosFinish
-    
-.XPosFinish
+    bpl .p0loop
     
     sta WSYNC       ; Not sure if this code should be inside
     sta HMOVE       ; or outside of the loop.
     
-    ; We're gonna leave the p0loop label there for when we need
-    ; to position everything.
     
+    
+;=================================
+;
+; Prep Che's Y position, and calculate
+; for VDELP0
+;
+;=================================
+    
+    lda ObjectY
+    lsr
+    sta Temp2
+    bcs NoDelay0
+    ldx #1
+    stx VDELP0
+    
+NoDelay:
+    sta Player0Offset   ; We are using a different method of calculating
+                        ; the Y position of GRP0 than /Collect/
 
-    
-; Animation Now
+;=================================
+;
+; Animation for Che, GRP0
+;
+;=================================
 
     lda ObjectX
     cmp SavedX
@@ -438,6 +450,19 @@ SaveFrame:
     adc #0
     sta Player0Clr+1
     
+;=================================
+;
+; Prep Y position of GRP1: Section 1
+;
+;=================================
+    
+    ; Come back to this, I wonder if I need to use VDELP1
+    ; for each section of GRP1 graphics down the screen
+    
+    lda ObjectY+1
+    lsr
+    sta EnvGfxOffset
+    
     rts
     
 ShapePtrLow:
@@ -529,11 +554,11 @@ Kernel:
                      
 DoDrawGrp0pre:          ; 3 28
     lda (Player0Ptr),y  ; 5 33
-    sta Temp            ; 3 36
+    sta CheGfxTemp            ; 3 36
     lda (Player0Clr),y  ; 5 41
     sta COLUP0          ; 3 44
 
-    lda #$18            ; 2 46    - Yellow
+    lda #0              ; 2 46    
     sta COLUP1          ; 3 49
     lda #0              ; 2 51
     sta GRP1            ; 3 54    - We will not be showing Player1 
@@ -543,18 +568,128 @@ DoDrawGrp0pre:          ; 3 28
 .KernelLoop
 
 	sta WSYNC           ; 3 59
-;-----------------------------------------------------
+
+
+;------------------------------------------------------
+
+
+
+;---------------------------------
+;
+; KERNEL LINE ONE 
+;
+;---------------------------------
+
 
 ;=================================
 ;
-; Draw Graphics in time for left-most
+; Draw Che Graphics in time for left-most
 ; side of the screen.
 ;
 ;=================================
 
-    lda Temp            ; 3  6
-    sta GRP0            ; 3  9
+    lda CheGfxTemp      ; 3  3
+    sta GRP0            ; 3  6
 
+;=================================
+;
+; Test which section we are in.
+;
+; This is for drawing GRP1 repeatedly
+; down the screen
+;
+;=================================
+
+.LowSection
+    cpy #56                 ; 2  8        - If greater than kernel line 55,
+    bcs .MiddleSection      ; 2 10 (3 11)   we must be drawing the middle section
+
+    lda LowSectionHeight    ; 3 13
+    sta EnvHeight           ; 3 16
+    
+    lda LowSectionOffset    ; 3 19
+    sta EnvGfxOffset        ; 3 22
+
+    lda LowSectionPtr       ; 3 25
+    sta EnvGfxPtr           ; 3 28
+    lda LowSectionPtr+1     ; 3 31
+    sta EnvGfxPtr+1         ; 3 34
+
+    lda LowSectionClrPtr    ; 3 37
+    sta EnvClrPtr           ; 3 40
+    lda LowSectionClrPtr+1  ; 3 43
+    sta EnvClrPtr+1         ; 3 46
+
+    jmp .SectionsDone       ; 3 49
+                            
+.MiddleSection              ;(3 11)
+    cpy #76                 ; 2 13        - If greater than kernel line 75,
+    bcs .TopSection         ; 2 15 (3 16)   we must be drawing the top section
+
+    lda LowSectionHeight
+    sta EnvHeight
+
+    lda MidSectionOffset
+    sta EnvGfxOffset
+    
+    lda MidSectionPtr
+    sta EnvGfxPtr
+    lda MidSectionPtr+1
+    sta EnvGfxPtr+1
+    
+    lda MidSectionClrPtr
+    sta EnvClrPtr
+    lda MidSectionClrPtr+1
+    sta EnvClrPtr+1
+    
+    jmp .SectionsDone
+    
+.TopSection                 ;(3 16)
+    lda LowSectionHeight    ; 3 19
+    sta EnvHeight
+
+    lda TopSectionOffset
+    sta EnvGfxOffset
+    
+    lda TopSectionPtr
+    sta EnvGfxPtr
+    lda TopSectionPtr+1
+    sta EnvGfxPtr+1
+    
+    lda TopSectionClrPtr
+    sta EnvClrPtr
+    lda TopSectionClrPtr+1
+    Sta EnvClrPtr+1
+    
+.SectionsDone
+   
+;=================================
+;
+; Calculate Tree Graphics
+;
+;=================================
+    
+    lda EnvHeight       ; 3 37
+    dcp EnvGfxOffset    ; 5 42
+    bcs DoDrawEnv       ; 2 44 (3 45)
+    lda #0              ; 2 46
+    .byte $2C           ; 4 50
+    
+DoDrawTree:             ;(3 45)
+    lda (EnvGfxPtr),y   ; 5 50
+    sta EnvGfxTemp      ; 3 53
+    lda (EnvClrPtr),y   ; 5 58
+    sta COLUP1          ; 3 61
+    
+
+;---------------------------------
+;
+; KERNEL LINE TWO
+;
+;---------------------------------
+
+
+    
 ;=================================
 ;
 ; Calculate Che Graphics
@@ -573,23 +708,15 @@ DoDrawGrp0:             ; 3 19
     lda (Player0Clr),y  ; 5 32
     sta COLUP0          ; 3 35
     
-;=================================
-;
-; Calculate Tree Graphics
-;
-;=================================
     
-    lda #ENV_HEIGHT     ; 2 37
-    dcp EnvGfxOffset    ; 5 42
-    bcs DoDrawEnv       ; 2 44 (3 45)
-    lda #0              ; 2 46
-    .byte $2C           ; 4 50
     
-DoDrawTree:             ;(3 45)
-    lda (EnvGfxPtr),y   ; 5 50
-    sta EnvGfxTemp      ; 3 53
-    lda (EnvClrPtr),y   ; 5 58
-    sta COLUP1          ; 3 61
+    
+    
+    
+    
+    
+    
+    
     
     dey
     bne .KernelLoop
