@@ -1,0 +1,259 @@
+; usage SECTION #
+; # = 0 thru 4 for 5 sections
+; level 0 is lowest section and has special condition
+; of being solid in the platform area.
+
+        MAC SECTION 
+.SEC    SET {1}
+        ldy Heights+.SEC                ;    load Y with height of current section
+        lda #ICE_TOP_COLOR
+        sta COLUPF
+        lda (FrostyImagePtr+.SEC*2),y
+        and (FrostyMaskPtr+.SEC*2),y
+        tax
+        lda (FrostyColorPtr+.SEC*2),y
+        tay
+        lda FireBallX+.SEC*2
+        ; on 1 scan line PosPlayer1 draws & colors Frosty
+        ; positions player 1
+        ; returns at cycle 9 on the next scan line
+        jsr PosPlayer1                ; 9
+
+;----------------------------------------------------------------        
+        
+        ldy Heights+.SEC              ; 3  12
+        dey                           ; 2  14
+        lda (FrostyImagePtr+.SEC*2),y ; 5  19
+        and (FrostyMaskPtr+.SEC*2),y  ; 5  24
+        sta GRP0                      ; 3  27 <- slightly delayed
+        lda (FrostyColorPtr+.SEC*2),y ; 5  32
+        sta COLUP0                    ; 3  35 <- delayed
+        lsr FrostyMeltY               ; 5  40
+        dey                           ; 2  42
+        cpy #11                       ; 2  44
+        bcc .iceLoop                  ; 2  46
+        ; shift melt-enable bit into position for this section
+
+.airLoop
+        lda (FrostyImagePtr+.SEC*2),y ; 5  47
+        and (FrostyMaskPtr+.SEC*2),y  ; 5  52
+        sta WSYNC                     ; 3  55
+
+;------------------------------------------------------------------        
+        
+        sta GRP0                      ; 3
+        lda (FrostyColorPtr+.SEC*2),y ; 5  8
+        sta COLUP0                    ; 3 11
+        lda (FireImagePtr+.SEC*2),y   ; 5 16
+        sta GRP1                      ; 3 19
+        dey                           ; 2 21
+        cpy IceSize                   ; 2 23
+        bcs .airLoop                  ; 3 26
+        
+; this draws top row of ice with light blue        
+        lda (FrostyImagePtr+.SEC*2),y ; 5  64
+        and (FrostyMaskPtr+.SEC*2),y  ; 5  69
+        sta WSYNC                     ; 3  72
+
+;-------------------------------------------------------------------                
+        
+        sta GRP0                      ; 3
+        lda (FrostyColorPtr+.SEC*2),y ; 5   8
+        sta COLUP0                    ; 3  11
+        lda (FireImagePtr+.SEC*2),y   ; 5  16
+        sta GRP1                      ; 3  19
+        ldx IceData+.SEC*4            ; 3  22
+        stx PF1                       ; 3  25
+        ldx IceData+.SEC*4+1          ; 3  28
+        stx PF2                       ; 3  31
+        ldx IceData+.SEC*4+2          ; 3  34
+        SLEEP 9                       ; 9  43
+        dey                           ; 2  45
+        stx PF2                       ; 3  48 <- must be at 48
+        ldx IceData+.SEC*4+3          ; 3  51
+        stx PF1                       ; 3  54
+        
+        lda (FrostyImagePtr+.SEC*2),y ; 5  64
+        and (FrostyMaskPtr+.SEC*2),y  ; 5  69
+        sta WSYNC                     ; 3  72
+
+;------------------------------------------------------------------        
+        
+        sta GRP0                      ; 3
+        lda (FrostyColorPtr+.SEC*2),y ; 5   8
+        sta COLUP0                    ; 3  11
+        lda (FireImagePtr+.SEC*2),y   ; 5  16
+        sta GRP1                      ; 3  19
+        ldx IceData+.SEC*4            ; 3  22
+        stx PF1                       ; 3  25
+        ldx IceData+.SEC*4+1          ; 3  28
+        stx PF2                       ; 3  31
+        ldx IceData+.SEC*4+2          ; 3  34
+        SLEEP 9                       ; 9  43
+        dey                           ; 2  45
+        stx PF2                       ; 3  48 <- must be at 48
+        ldx IceData+.SEC*4+3          ; 3  51
+        stx PF1                       ; 3  54
+        
+        lda (FrostyImagePtr+.SEC*2),y ; 5  59
+        and (FrostyMaskPtr+.SEC*2),y  ; 5  64
+        ldx #ICE_COLOR                ; 2  66
+        SLEEP 4                       ; 4  70
+        stx COLUPF                    ; 3  73
+        bne .skipIL                   ; 3  76
+        
+.iceLoop
+        lda (FrostyImagePtr+.SEC*2),y ; 5  64
+        and (FrostyMaskPtr+.SEC*2),y  ; 5  69
+        sta WSYNC                     ; 3  72
+
+;----------------------------------------------------------------        
+        
+.skipIL        
+        sta GRP0                      ; 3
+        lda (FrostyColorPtr+.SEC*2),y ; 5   8
+        sta COLUP0                    ; 3  11
+        lda (FireImagePtr+.SEC*2),y   ; 5  16
+        sta GRP1                      ; 3  19
+        ldx IceData+.SEC*4            ; 3  22
+        stx PF1                       ; 3  25
+        ldx IceData+.SEC*4+1          ; 3  28
+        stx PF2                       ; 3  31
+        ldx IceData+.SEC*4+2          ; 3  34
+        SLEEP 9                       ; 9  43
+        dey                           ; 2  45
+        stx PF2                       ; 3  48 <- must be at 48
+        ldx IceData+.SEC*4+3          ; 3  51
+        stx PF1                       ; 3  54
+        cpy #8                        ; 2  56
+        bcs .iceLoop                  ; 3  59 (2 58 not taken)
+        
+        lda (FrostyImagePtr+.SEC*2),y ; 5  63
+        and (FrostyMaskPtr+.SEC*2),y  ; 5  68
+        ldx #ICE_BOTTOM_COLOR         ; 2  70
+        stx COLUPF                    ; 3  73
+        sta WSYNC                     ; 3  76
+
+;---------------------------------------------------------------       
+        
+        sta GRP0                      ; 3
+        lda (FrostyColorPtr+.SEC*2),y ; 5   8
+        sta COLUP0                    ; 3  11
+        lda (FireImagePtr+.SEC*2),y   ; 5  16
+        sta GRP1                      ; 3  19
+        ldx IceData+.SEC*4            ; 3  22
+        stx PF1                       ; 3  25
+        ldx IceData+.SEC*4+1          ; 3  28
+        stx PF2                       ; 3  31
+        ldx IceData+.SEC*4+2          ; 3  34
+        SLEEP 9                       ; 9  43
+        dey                           ; 2  45
+        stx PF2                       ; 3  48 <- must be at 48
+        ldx IceData+.SEC*4+3          ; 3  51
+        stx PF1                       ; 3  54
+        cpy #8                        ; 2  56
+        bcs .iceLoop                  ; 3  59 (2 58 not taken)        
+        
+        
+        lda (FrostyImagePtr+.SEC*2),y ; 5  63
+        and (FrostyMaskPtr+.SEC*2),y  ; 5  68
+        ldx FrostyMeltY               ; 3  71
+        ;sta WSYNC          ; 3
+        NOP                           ; 2  73
+        stx ENAM0                     ; 3  76
+
+;-----------------------------------------------------------------                
+        
+        sta GRP0                      ; 3   
+        lda (FrostyColorPtr+.SEC*2),y ; 5   8
+        sta COLUP0                    ; 3  11
+        lda (FireImagePtr+.SEC*2),y   ; 5  16
+        sta GRP1                      ; 3  19
+        ldx IceData+.SEC*4            ; 3  22
+        stx PF1                       ; 3  25 <- needs to be before 28
+        ldx IceData+.SEC*4+1          ; 3  28
+        stx PF2                       ; 3  31
+        ldx IceData+.SEC*4+2          ; 3  34
+        SLEEP 9                       ; 9  43
+        dey                           ; 2  45
+        stx PF2                       ; 3  48 <- must be at 48
+        ldx IceData+.SEC*4+3          ; 3  51  
+        stx PF1                       ; 3  54
+        
+ if .SEC = 0
+.platformLoop
+        ldx #PLATFORM_COLOR
+        lda #0
+        sta WSYNC
+        sta GRP0
+        sta GRP1
+        sta ENAM0 ; turn off melt
+        stx COLUPF
+        ldx #255
+        stx PF0
+        stx PF1
+        stx PF2
+        dey
+        cpy #2
+        bcs .platformLoop
+ else
+        lda (FrostyImagePtr+.SEC*2),y ; 5  59
+        and (FrostyMaskPtr+.SEC*2),y  ; 5  64
+        ldx #PLATFORM_COLOR           ; 2  66
+        stx.w COLUPF                  ; 4  70
+        sta WSYNC                     ; 3  73
+
+;--------------------------------------------------------------------        
+        
+        sta GRP0                      ; 3
+        lda (FrostyColorPtr+.SEC*2),y ; 5   8
+        sta COLUP0                    ; 3  11
+        lda #0                        ; 2  13
+        sta GRP1                      ; 3  16
+        sta ENAM0                     ; 3  19 turn off melt     
+        ldx Platforms+.SEC*4-4        ; 3  22
+        stx PF1                       ; 3  25
+        ldx Platforms+.SEC*4-4+1      ; 3  28
+        stx PF2                       ; 3  31
+        ldx Platforms+.SEC*4-4+2      ; 3  34
+        SLEEP 9                       ; 9  43
+        dey                           ; 2  45
+        stx PF2                       ; 3  48 <- must be at 48
+        ldx Platforms+.SEC*4-4+3      ; 3  51
+        stx PF1                       ; 3  54
+        
+.platformLoop
+        lda (FrostyImagePtr+.SEC*2),y ; 5  64
+        and (FrostyMaskPtr+.SEC*2),y  ; 5  69
+        sta WSYNC                     ; 3  72
+
+;---------------------------------------------------------------------        
+        
+        sta GRP0                      ; 3
+        lda (FrostyColorPtr+.SEC*2),y ; 5   8
+        sta COLUP0                    ; 3  11
+        ldx Platforms+.SEC*4-4        ; 3  14
+        stx PF1                       ; 3  17
+        ldx Platforms+.SEC*4-4+1      ; 3  20
+        stx PF2                       ; 3  23
+        ldx Platforms+.SEC*4-4+2      ; 3  26
+        SLEEP 17                      ;17  43
+        dey                           ; 2  45
+        stx PF2                       ; 3  48 <- must be at 48
+        ldx Platforms+.SEC*4-4+3      ; 3  51
+        stx PF1                       ; 3  54
+        cpy #2                        ; 2  56
+        bcs .platformLoop             ; 3  59
+ ENDIF        
+
+        lda (FrostyImagePtr+.SEC*2),y ; 5
+        and (FrostyMaskPtr+.SEC*2),y  ; 5
+        sta WSYNC                     ; 3
+        sta GRP0                      ; 3
+        lda (FrostyColorPtr+.SEC*2),y ; 5
+        sta COLUP0                    ; 3
+        lda #0
+        sta PF0
+        sta PF1
+        sta PF2
+        ENDM
