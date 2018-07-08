@@ -45,10 +45,41 @@
 	include che_mask.asm
 	
 	include che_graphics.asm
+	
+	
+    MAC JUMP_TABLE ; put this at the start of every bank
+    RORG $F000
+InitSystem
+    cmp SelectBank8   ; inits system then goes to the menu
+    jmp InitSystemCode   ; jump to Main Menu
+Kernel
+    cmp SelectBank7    ; draws score, top castles, dragons
+    jmp KernelCode
+OverScan
+    cmp SelectBank8
+    jmp OverScanCode
 
-;==================
-; Define Constants
-;==================
+
+    MAC BANKS_AND_VECTORS ; put this at the end of every bank
+    RORG $FFF4
+SelectBank1 .byte $00
+SelectBank2 .byte $00
+SelectBank3 .byte $00
+SelectBank4 .byte $00
+SelectBank5 .byte $00
+SelectBank6 .byte $00
+SelectBank7 .byte $00
+SelectBank8 .byte $00
+    .word InitSystem ; NMI and 8 overlap NMI
+    .word InitSystem ; RESET
+    .word InitSystem ; IRQ
+    ENDM
+
+	
+	
+;===================
+; Define Constants =
+;===================
 
 PF_HEIGHT   = 192  
 
@@ -72,9 +103,23 @@ P0_HEIGHT   = 25
 
 	; Define a segment for code
 	SEG CODE
+	
+; - bank 1 - KERNEL and graphics    
+    ORG $E000
+    JUMP_TABLE
 
-	; 4K ROM starts at $F000
-	ORG $F000
+    
+; bank 2
+
+        ORG $F000
+        JUMP_TABLE
+        
+InitSystemCode
+InitFrostyCode    ; starting point of this game
+        CLEAN_START
+InitNewGame
+
+    
 
 ;========================================
 ; PosObject
@@ -482,9 +527,4 @@ OverScan:
 ; Define End of Cartridge
 ;=================================
         ORG $FFFA        ; set address to 6507 Interrupt Vectors 
-        ;.WORD InitSystem ; NMI
-        ;.WORD InitSystem ; RESET
-        ;.WORD InitSystem ; IRQ
-        .byte <InitSystem, >InitSystem
-        .byte <InitSystem, >InitSystem
-        .byte <InitSystem, >InitSystem
+        BANKS_AND_VECTORS

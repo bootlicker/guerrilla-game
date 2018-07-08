@@ -12,21 +12,40 @@ ShiftForwards:
     jsr Skip_Kernel
 
 .ShiftForwardsLoop
-    
-    lda Rand8   ; 3  3
-    lsr         ; 2  5
-    rol Rand16  ; 5 10
-    bcc noeor   ; 2 12
-    eor #$D4    ; 2 14 - $D4 is the only number I know the inverse to 
 
-.noeor          ;
-    sta Rand8   ; 3 17
-    eor Rand16  ; 3 20
+; FIRST BATCH of 16-BIT RNG
     
-    inx
-    clc
-    bne ShiftForwardsLoop
-    beq Pointer_Calc
+    lda Rand8       ; 3  3
+    lsr             ; 2  5
+    rol Rand16      ; 5 10
+    bcc noeor_for   ; 2 12
+    eor #$D4        ; 2 14 - $D4 is the only number I know the inverse to 
+
+.noeor_for          ;
+    sta Rand8       ; 3 17
+    eor Rand16      ; 3 20
+    
+; SECOND BATCH OF 16-BIT RNG
+    
+    lda Rand24      ; 3 23
+    lsr             ; 2 25
+    rol Rand32      ; 5 30
+    bcc noeor_for_2 ; 2 32
+    eor #$??        ; 2 34 
+
+.noeor_for_2        ;
+    sta Rand24      ; 3 37
+    eor Rand32      ; 3 40
+
+    inx             ; 2 42
+    clc             ; 2 44
+    bne ShiftForwardsLoop   ; 2 46
+    beq Pointer_Calc        ; 2 48
+    
+; TOTAL TIME FOR RNG = 228 * 64 = 14 592
+; TOTAL TIME USED FOR 256 CELL ROTATION:
+; ~48 * 256 ~= 12 288 
+    
     
 ; SHIFT BACKWARDS
 
@@ -35,7 +54,9 @@ ShiftBackwards:
     jsr Skip_Kernel
 
 .ShiftBackwardsLoop
-    
+
+; FIRST BATCH of 16-BIT RNG
+
     lda Rand8
     lsr
     rol Rand16
@@ -45,11 +66,27 @@ ShiftBackwards:
 .noeorleft 
     sta Rand8
     eor Rand16
-        
-    inx
-    clc
-    bne ShiftBackwardsLoop
-    beq Pointer_Calc
+
+; SECOND BATCH OF 16-BIT RNG
+    
+    lda Rand24       ; 3 23
+    lsr              ; 2 25
+    rol Rand32       ; 5 30
+    bcc noeor_left_2 ; 2 32
+    eor #$??         ; 2 34 
+
+.noeor_left_2        ;
+    sta Rand24       ; 3 37
+    eor Rand32       ; 3 40
+
+    inx                     ; 2 42
+    clc                     ; 2 44
+    bne ShiftBackwardsLoop  ; 2 46
+    beq Pointer_Calc        ; 2 48
+    
+; TOTAL TIME FOR RNG = 228 * 64 = 14 592
+; TOTAL TIME USED FOR 256 CELL ROTATION:
+; ~48 * 256 ~= 12 288 
 
 ;================================================
 ; Translation of the output of the random number
@@ -85,6 +122,12 @@ Pointer_Calc:
     
     ldx Rand16
     stx Rand_Pointer_Calc16
+    
+    ldx Rand24
+    stx Rand_Pointer_Calc24
+    
+    ldx Rand32
+    stx Rand_Pointer_Calc24
     
     cpy #3
     beq Band_3_Calc

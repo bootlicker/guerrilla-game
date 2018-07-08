@@ -81,9 +81,13 @@ SavedY:         ds 1    ; $C4
 
 Rand8:          ds 1
 Rand16:         ds 1
+Rand24:         ds 1
+Rand32:         ds 1
 
 Rand_Pointer_Calc8:     ds 1
 Rand_Pointer_Calc16:    ds 1
+Rand_Pointer_Calc24:    ds 1
+Rand_Pointer_Calc32:    ds 1
 
 Band_0_Index:   ds 1
 Band_1_Index:   ds 1
