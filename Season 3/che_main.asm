@@ -35,7 +35,8 @@ SelectBank8 equ $1FFB
 
     MAC BANKS_AND_VECTORS 
 
-    ORG $1FF4
+    RORG $FFF4
+    ORG [{1} - 1] * $1000 + $0FF4
     
 SelectBank1 .byte $00
 SelectBank2 .byte $00
@@ -98,29 +99,38 @@ BattleOS
 
 	SELECT_BANK 1
 	include InitSystem.asm
-	END_BANK 1
+	echo "----",($FFF4 - *) , "bytes of ROM left InitSystem"
+	BANKS_AND_VECTORS 1
 	
 	SELECT_BANK 2
 	include OverworldVB.asm
-	END_BANK 2
+	echo "----",($FFF4 - *) , "bytes of ROM left Overworld Vertical Blank"
+	BANKS_AND_VECTORS 2
 	
 	SELECT_BANK 3
 	include OverworldKernel.asm
-	END_BANK 3
+	echo "----",($FFF4 - *) , "bytes of ROM left Overworld Kernel & Graphics"
+	BANKS_AND_VECTORS 3
 	
 	SELECT_BANK 4
 	include OverworldOS.asm
-	END_BANK 4
+	echo "----",($FFF4 - *) , "bytes of ROM left Overworld Overscan"
+	BANKS_AND_VECTORS 4
 	
     SELECT_BANK 5
     include BattleVB.asm
-    END_BANK 5
+    echo "----",($FFF4 - *) , "bytes of ROM left Battle Vertical Blank"
+    BANKS_AND_VECTORS 5
     
     SELECT_BANK 6
     include BattleKernel.asm
-    END_BANK 6
+    echo "----",($FFF4 - *) , "bytes of ROM left Battle Kernel & Graphics"
+    BANKS_AND_VECTORS 6
 
     SELECT_BANK 7
     include BattleOS.asm
-    END_BANK 7
+    echo "----",($FFF4 - *) , "bytes of ROM left Battle Overscan"
+    BANKS_AND_VECTORS 7
+    
+
 
